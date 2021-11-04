@@ -38,7 +38,8 @@ ASanta::ASanta()
 void ASanta::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	SpawnPick();
 }
 
 
@@ -67,6 +68,11 @@ void ASanta::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAxis("LookUpRate", this, &ASanta::LookUpAtRate);
 
 	PlayerInputComponent->BindAction("Debug", IE_Pressed, this, &ASanta::Debug);
+	
+	PlayerInputComponent->BindAction("Pick", IE_Pressed, this, &ASanta::SpawnPick);
+	PlayerInputComponent->BindAction("Bomb", IE_Pressed, this, &ASanta::SpawnBomb);
+	
+	PlayerInputComponent->BindAction("Attack", IE_Pressed, this, &ASanta::Attack);
 }
 
 void ASanta::TurnAtRate(float Rate)
@@ -108,5 +114,77 @@ void ASanta::MoveRight(float Value)
 void ASanta::Debug()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Debug")));
+}
+
+
+void ASanta::SpawnPick()
+{
+	if(IsValid(Pick)) return;
+	if(IsValid(Bomb)) Bomb->Destroy();
+
+	WeaponType = PICK;
+	
+	FString SocketName = "PickSocket";
+	FVector Location = GetMesh()->GetSocketLocation(*SocketName);
+	FRotator Rotation = GetMesh()->GetSocketRotation(*SocketName);
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Socket loc = %s"), *Location.ToString()));
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Socket rot = %s"), *Rotation.ToString()));
+	
+	
+	FActorSpawnParameters SpawnInfo;
+	FAttachmentTransformRules AttachRules = FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true);
+	
+	Pick = GetWorld()->SpawnActor<AActor>(Weapons[0],Location, Rotation, SpawnInfo);
+	
+	Pick->AttachToComponent(GetMesh(), AttachRules, *SocketName);
+}
+
+void ASanta::SpawnBomb()
+{
+	if(IsValid(Bomb) || Bombs <= 0) return;
+	if(IsValid(Pick)) Pick->Destroy();
+
+	WeaponType = BOMB;
+	
+	FString SocketName = "BombWeapon";
+	FVector Location = GetMesh()->GetSocketLocation(*SocketName);
+	FRotator Rotation = GetMesh()->GetSocketRotation(*SocketName);
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Socket loc = %s"), *Location.ToString()));
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Socket rot = %s"), *Rotation.ToString()));
+
+	FActorSpawnParameters SpawnInfo;
+	FAttachmentTransformRules AttachRules = FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true);
+	
+	Bomb = GetWorld()->SpawnActor<AActor>(Weapons[1],Location, Rotation, SpawnInfo);
+	
+	Bomb->AttachToComponent(GetMesh(), AttachRules, *SocketName);
+}
+
+void ASanta::Attack()
+{
+	switch (WeaponType)
+	{
+		case PICK:
+			PickAttack();
+			break;
+		case BOMB:
+			BombAttack();
+			break;
+		default:
+			break;
+	}
+}
+
+void ASanta::PickAttack()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("PickAttack")));
+}
+
+void ASanta::BombAttack()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("BombAttack")));
+
 }
 

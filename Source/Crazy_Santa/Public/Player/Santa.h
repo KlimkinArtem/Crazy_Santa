@@ -6,6 +6,15 @@
 #include "GameFramework/Character.h"
 #include "Santa.generated.h"
 
+DECLARE_DELEGATE_TwoParams(FWeaponDelegate, FString, int);
+
+UENUM()
+enum EWeaponType
+{
+	PICK,
+	BOMB,
+};
+
 UCLASS()
 class CRAZY_SANTA_API ASanta : public ACharacter
 {
@@ -63,10 +72,32 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UPROPERTY(EditDefaultsOnly, Category= "Weapons")
+	TArray<TSubclassOf<AActor>> Weapons;
 	
 
 private:
 
 	void Debug();
 
+	void SpawnPick();
+	void SpawnBomb();
+	
+	void Attack();
+	void PickAttack();
+	void BombAttack();
+
+
+	AActor* Pick;
+	AActor* Bomb;
+
+	EWeaponType WeaponType = EWeaponType::PICK;
+
+	float Bombs = 0;
+
 };
+
+
+
+
+
