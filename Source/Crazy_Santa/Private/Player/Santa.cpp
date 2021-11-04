@@ -1,5 +1,6 @@
 #include "Player/Santa.h"
 
+#include "DrawDebugHelpers.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -147,7 +148,7 @@ void ASanta::SpawnBomb()
 
 	WeaponType = BOMB;
 	
-	FString SocketName = "BombWeapon";
+	FString SocketName = "BombSocket";
 	FVector Location = GetMesh()->GetSocketLocation(*SocketName);
 	FRotator Rotation = GetMesh()->GetSocketRotation(*SocketName);
 
@@ -167,19 +168,62 @@ void ASanta::Attack()
 	switch (WeaponType)
 	{
 		case PICK:
-			PickAttack();
+			CallFunctionByNameWithArguments(TEXT("PickAttackAnim"), ar, NULL, true);
 			break;
 		case BOMB:
-			BombAttack();
+			CallFunctionByNameWithArguments(TEXT("BombAttackEvent"), ar, NULL, true);
 			break;
 		default:
 			break;
 	}
 }
 
-void ASanta::PickAttack()
+void ASanta::PickAttack(float Radius, int32 Segments)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("PickAttack")));
+
+
+
+	FString SocketName = "PickAttackSocket";
+	FVector Location = GetMesh()->GetSocketLocation(*SocketName);
+	FRotator Rotation = GetMesh()->GetSocketRotation(*SocketName);
+
+	FActorSpawnParameters SpawnInfo;
+	FAttachmentTransformRules AttachRules = FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true);
+	
+	auto Force = GetWorld()->SpawnActor<AActor>(RadialForce[0],Location, Rotation, SpawnInfo);
+	Force->Destroy();
+
+	
+	FVector Start = FollowCamera->GetComponentLocation();
+	FVector FollowCameraForwardVector = FollowCamera->GetForwardVector();
+
+	FHitResult OutHit;
+	
+	FVector End = ((FollowCameraForwardVector * 400.f) + Start);
+	FCollisionQueryParams CollisionParams;
+
+	CollisionParams.AddIgnoredActor(this);
+	
+	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 3, 0, 2);
+
+	bool bIsHit = GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_Pawn, CollisionParams);
+
+	
+	
+	if(bIsHit)
+	{
+		if(GEngine)
+		{
+			if(OutHit.Actor->ActorHasTag("Pick"))
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("PICKCKCKC")));
+			}
+		}
+
+		
+	}
+
+	
 }
 
 void ASanta::BombAttack()

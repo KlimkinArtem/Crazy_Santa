@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Misc/OutputDeviceNull.h"
 #include "Santa.generated.h"
 
 DECLARE_DELEGATE_TwoParams(FWeaponDelegate, FString, int);
@@ -74,6 +75,12 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, Category= "Weapons")
 	TArray<TSubclassOf<AActor>> Weapons;
+
+	UPROPERTY(EditDefaultsOnly, Category= "RadialForce")
+	TArray<TSubclassOf<AActor>> RadialForce;
+	
+	UFUNCTION(BlueprintCallable)
+	void PickAttack(float Radius, int32 Segments);
 	
 
 private:
@@ -84,12 +91,14 @@ private:
 	void SpawnBomb();
 	
 	void Attack();
-	void PickAttack();
+
 	void BombAttack();
 
 
 	AActor* Pick;
 	AActor* Bomb;
+	FOutputDeviceNull ar;
+
 
 	EWeaponType WeaponType = EWeaponType::PICK;
 
