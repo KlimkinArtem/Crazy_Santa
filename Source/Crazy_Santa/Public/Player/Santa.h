@@ -7,6 +7,7 @@
 #include "Misc/OutputDeviceNull.h"
 #include "Santa.generated.h"
 
+class USoundCue;
 DECLARE_DELEGATE_TwoParams(FWeaponDelegate, FString, int);
 
 UENUM()
@@ -76,11 +77,23 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category= "Weapons")
 	TArray<TSubclassOf<AActor>> Weapons;
 
+	UPROPERTY(EditDefaultsOnly, Category= "Weapons")
+	TSubclassOf<AActor> PH_Bomb;
+
 	UPROPERTY(EditDefaultsOnly, Category= "RadialForce")
 	TArray<TSubclassOf<AActor>> RadialForce;
 	
 	UFUNCTION(BlueprintCallable)
-	void PickAttack(float Radius, int32 Segments);
+	void PickAttack(float Radius, int32 Segments, bool bDrawDebugSphere = false);
+	
+	UFUNCTION(BlueprintCallable)
+	void BombAttack();
+
+	UPROPERTY(EditAnywhere, Category = "Audio")
+	TArray<USoundCue*> PickCue;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float Bombs = 3;
 	
 
 private:
@@ -92,7 +105,7 @@ private:
 	
 	void Attack();
 
-	void BombAttack();
+	
 
 
 	AActor* Pick;
@@ -102,8 +115,7 @@ private:
 
 	EWeaponType WeaponType = EWeaponType::PICK;
 
-	float Bombs = 0;
-
+	bool bPickCue = false;
 };
 
 

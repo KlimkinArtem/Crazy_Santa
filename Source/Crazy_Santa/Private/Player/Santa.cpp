@@ -5,6 +5,9 @@
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Math/TransformCalculus3D.h"
+#include "Sound/SoundCue.h"
 
 
 ASanta::ASanta()
@@ -171,17 +174,17 @@ void ASanta::Attack()
 			CallFunctionByNameWithArguments(TEXT("PickAttackAnim"), ar, NULL, true);
 			break;
 		case BOMB:
-			CallFunctionByNameWithArguments(TEXT("BombAttackEvent"), ar, NULL, true);
+			BombAttack();
 			break;
 		default:
 			break;
 	}
 }
 
-void ASanta::PickAttack(float Radius, int32 Segments)
+void ASanta::PickAttack(float Radius, int32 Segments, bool bDrawDebugSphere)
 {
 
-
+	bPickCue = false;
 
 	FString SocketName = "PickAttackSocket";
 	FVector Location = GetMesh()->GetSocketLocation(*SocketName);
@@ -193,42 +196,56 @@ void ASanta::PickAttack(float Radius, int32 Segments)
 	auto Force = GetWorld()->SpawnActor<AActor>(RadialForce[0],Location, Rotation, SpawnInfo);
 	Force->Destroy();
 
-	
-	FVector Start = FollowCamera->GetComponentLocation();
-	FVector FollowCameraForwardVector = FollowCamera->GetForwardVector();
+	FVector Start = GetMesh()->GetSocketLocation(TEXT("PickAttackSocket"));
 
-	FHitResult OutHit;
-	
-	FVector End = ((FollowCameraForwardVector * 400.f) + Start);
-	FCollisionQueryParams CollisionParams;
-
-	CollisionParams.AddIgnoredActor(this);
-	
-	DrawDebugLine(GetWorld(), Start, End, FColor::Green, false, 3, 0, 2);
-
-	bool bIsHit = GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_Pawn, CollisionParams);
-
+	if(bDrawDebugSphere) DrawDebugSphere(GetWorld(), Start, Radius, Segments, FColor(181,0,0), true, 2, 0, 2);
 	
 	
-	if(bIsHit)
+	TArray<FHitResult> OutHits;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+	
+	FCollisionShape Sphere = FCollisionShape::MakeSphere(Radius);
+	
+	bool bIsHit = GetWorld()->SweepMultiByChannel(OutHits, Start, Start, FQuat::Identity, ECC_Pawn, Sphere, Params);
+	
+	if (bIsHit)
 	{
-		if(GEngine)
-		{
-			if(OutHit.Actor->ActorHasTag("Pick"))
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("PICKCKCKC")));
-			}
-		}
-
 		
+		for (auto& Hit : OutHits)
+		{
+			if (GEngine) 
+			{
+				if(Hit.Actor->ActorHasTag("Pick"))
+				{
+					if(bPickCue) return;
+					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("PICKkkk")));
+					bPickCue = true;
+					UGameplayStatics::SpawnSound2D(this, PickCue[0], 1);
+					return;
+				}
+			}						
+		}
 	}
-
 	
+	UGameplayStatics::SpawnSound2D(this, PickCue[1], 1);
 }
 
 void ASanta::BombAttack()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("BombAttack")));
+
+	FString SocketName = "BombSocket";
+	FVector Location = GetMesh()->GetSocketLocation(*SocketName);
+	FRotator Rotation = GetMesh()->GetSocketRotation(*SocketName);
+	
+	FActorSpawnParameters SpawnInfo;
+	
+	GetWorld()->SpawnActor<AActor>(PH_Bomb, Location, Rotation, SpawnInfo);
+
+	Bombs -= 1;
+
+	if(Bombs <= 0) SpawnPick();
 
 }
 
