@@ -123,9 +123,18 @@ void ASanta::Debug()
 
 void ASanta::SpawnPick()
 {
-	if(IsValid(Pick)) return;
-	if(IsValid(Bomb)) Bomb->Destroy();
+	if(!GEngine) return;
+	
+	if(WeaponType == PICK || !bResetAnimMontage)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Pick Is valid")));
+		return;
+	}else if(WeaponType == BOMB)
+	{
+		Bomb->Destroy();
+	}
 
+	
 	WeaponType = PICK;
 	
 	FString SocketName = "PickSocket";
@@ -146,8 +155,17 @@ void ASanta::SpawnPick()
 
 void ASanta::SpawnBomb()
 {
-	if(IsValid(Bomb) || Bombs <= 0) return;
-	if(IsValid(Pick)) Pick->Destroy();
+	if(Bombs <= 0 || !bResetAnimMontage || WeaponType == BOMB)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Bomb Is valid")));
+		return;
+	}
+	
+	Pick->Destroy();
+	
+
+    	
+	
 
 	WeaponType = BOMB;
 	
@@ -155,8 +173,8 @@ void ASanta::SpawnBomb()
 	FVector Location = GetMesh()->GetSocketLocation(*SocketName);
 	FRotator Rotation = GetMesh()->GetSocketRotation(*SocketName);
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Socket loc = %s"), *Location.ToString()));
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Socket rot = %s"), *Rotation.ToString()));
+	//GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("Socket loc = %s"), *Location.ToString()));
+	
 
 	FActorSpawnParameters SpawnInfo;
 	FAttachmentTransformRules AttachRules = FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true);
@@ -171,7 +189,13 @@ void ASanta::Attack()
 	switch (WeaponType)
 	{
 		case PICK:
-			CallFunctionByNameWithArguments(TEXT("PickAttackAnim"), ar, NULL, true);
+			//CallFunctionByNameWithArguments(TEXT("PickAttackAnim"), ar, NULL, true);
+			if(bResetAnimMontage)
+			{
+				PlayAnimMontage(AnimMontage);
+				bResetAnimMontage = false;
+			}
+			
 			break;
 		case BOMB:
 			BombAttack();
@@ -183,7 +207,6 @@ void ASanta::Attack()
 
 void ASanta::PickAttack(float Radius, int32 Segments, bool bDrawDebugSphere)
 {
-
 	bPickCue = false;
 
 	FString SocketName = "PickAttackSocket";
@@ -233,6 +256,8 @@ void ASanta::PickAttack(float Radius, int32 Segments, bool bDrawDebugSphere)
 
 void ASanta::BombAttack()
 {
+	if(!bResetAnimMontage) return;
+	
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, FString::Printf(TEXT("BombAttack")));
 
 	FString SocketName = "BombSocket";
