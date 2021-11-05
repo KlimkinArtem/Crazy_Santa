@@ -13,6 +13,7 @@ DECLARE_DELEGATE_TwoParams(FWeaponDelegate, FString, int);
 UENUM()
 enum EWeaponType
 {
+	NONE,
 	PICK,
 	BOMB,
 };
@@ -92,8 +93,14 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Audio")
 	TArray<USoundCue*> PickCue;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float Bombs = 3;
+	UPROPERTY(BlueprintReadOnly)
+	float Bombs = 10;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Aniamtion")
+	UAnimMontage* AnimMontage;
+
+	UPROPERTY(BlueprintReadWrite)
+	bool bResetAnimMontage = true;
 	
 
 private:
@@ -113,7 +120,7 @@ private:
 	FOutputDeviceNull ar;
 
 
-	EWeaponType WeaponType = EWeaponType::PICK;
+	EWeaponType WeaponType = EWeaponType::NONE;
 
 	bool bPickCue = false;
 };
